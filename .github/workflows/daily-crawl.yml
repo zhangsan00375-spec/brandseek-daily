@@ -1,0 +1,27 @@
+name: BrandSeek Daily Crawl
+
+on:
+  schedule:
+    - cron: '0 2 * * *'
+  workflow_dispatch:
+
+jobs:
+  crawl-and-send:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: python crawler.py
+      - run: python email_sender.py
+        env:
+          TO_EMAIL: ${{ secrets.TO_EMAIL }}
+          RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
+      - uses: actions/upload-artifact@v4
+        with:
+          name: crawl-results
+          path: |
+            crawl_result.json
+            email_preview.html
+          retention-days: 7
