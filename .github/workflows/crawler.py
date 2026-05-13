@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-"""BrandSeek 品牌资产采集器"""
 import json, re, urllib.request, urllib.parse
 import xml.etree.ElementTree as ET
 from datetime import datetime, timedelta
@@ -109,27 +108,4 @@ class BrandSeekCrawler:
         for name, crawler in [("jd", self.crawlers["jd"]), ("ali", self.crawlers["ali"])]:
             print(f"[Crawl] {name}..."); 
             try: items = crawler.crawl(); all_assets.extend(items); stats[name] = len(items); print(f"  -> {len(items)} items")
-            except Exception as e: print(f"  -> failed: {e}"); stats[name] = 0
-        print("[Crawl] court...");
-        try: court_items = self.crawlers["court"].crawl(); all_assets.extend(court_items); stats["court"] = len(court_items); print(f"  -> {len(court_items)} items")
-        except Exception as e: print(f"  -> failed: {e}"); stats["court"] = 0
-        print("[Crawl] news...");
-        try: news_items = self.crawlers["news"].crawl(); all_news.extend(news_items); stats["news"] = len(news_items); print(f"  -> {len(news_items)} items")
-        except Exception as e: print(f"  -> failed: {e}"); stats["news"] = 0
-        seen_a, result_a = set(), []
-        for item in all_assets:
-            key = item.title[:20]
-            if key not in seen_a: seen_a.add(key); result_a.append(item)
-        seen_n, result_n = set(), []
-        for item in all_news:
-            key = item.title[:25]
-            if key not in seen_n: seen_n.add(key); result_n.append(item)
-        total = len(result_a) + len(result_n)
-        print(f"\nDone: {len(result_a)} assets + {len(result_n)} news = {total} total\n")
-        return {"assets": [asdict(a) for a in result_a], "news": [asdict(n) for n in result_n], "stats": stats, "timestamp": datetime.now().isoformat()}
-
-if __name__ == "__main__":
-    result = BrandSeekCrawler().run()
-    with open("crawl_result.json", "w", encoding="utf-8") as f:
-        json.dump(result, f, ensure_ascii=False, indent=2)
-    print("Saved to crawl_result.json")
+            except Exception as e: print(f"
