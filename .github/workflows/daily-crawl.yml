@@ -28,3 +28,4 @@ jobs:
             crawl_result.json
             email_preview.html
           retention-days: 7
+          
