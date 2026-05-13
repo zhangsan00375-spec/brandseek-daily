@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
-import json, os, urllib.request
+import json, os, smtplib
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
 from datetime import datetime
 
 def generate_html_email(data: dict) -> str:
@@ -20,13 +22,22 @@ def generate_html_email(data: dict) -> str:
         news_html = '<tr><td colspan="3" style="padding:20px;text-align:center;color:#8C9DB5;">今日暂无新资讯</td></tr>'
     return f"""<!DOCTYPE html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"></head><body style="margin:0;padding:0;background-color:#0F1B33;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;"><table width="100%" cellpadding="0" cellspacing="0" style="background-color:#0F1B33;"><tr><td align="center" style="padding:20px 10px;"><table width="640" cellpadding="0" cellspacing="0" style="max-width:640px;width:100%;"><tr><td style="padding:30px 20px;text-align:center;background-color:#111D36;border-radius:12px 12px 0 0;"><h1 style="color:#E8EDF2;font-size:24px;margin:0;font-weight:600;">BrandSeek 品牌资产日报</h1><p style="color:#8C9DB5;font-size:14px;margin:8px 0 0 0;">{date_str} · 自动采集自京东拍卖、阿里拍卖、法院公告等权威渠道</p></td></tr><tr><td style="padding:15px 20px;background-color:#1A2D4A;text-align:center;"><table width="100%" cellpadding="0" cellspacing="0"><tr><td style="text-align:center;padding:10px;"><span style="color:#D4943A;font-size:22px;font-weight:600;">{len(assets)}</span><br/><span style="color:#8C9DB5;font-size:12px;">新标的数据</span></td><td style="text-align:center;padding:10px;border-left:1px solid rgba(232,237,242,0.08);"><span style="color:#D4943A;font-size:22px;font-weight:600;">{len(news)}</span><br/><span style="color:#8C9DB5;font-size:12px;">行业资讯</span></td><td style="text-align:center;padding:10px;border-left:1px solid rgba(232,237,242,0.08);"><span style="color:#D4943A;font-size:22px;font-weight:600;">{len(assets) + len(news)}</span><br/><span style="color:#8C9DB5;font-size:12px;">总计</span></td></tr></table></td></tr><tr><td style="padding:20px;background-color:#1A2D4A;"><h2 style="color:#E8EDF2;font-size:18px;margin:0 0 15px 0;"><span style="color:#D4943A;margin-right:8px;">●</span>品牌资产标的</h2><table width="100%" cellpadding="0" cellspacing="0" style="font-size:13px;"><thead><tr style="border-bottom:2px solid rgba(232,237,242,0.15);"><th style="padding:8px;text-align:left;color:#8C9DB5;font-weight:500;width:60px;">状态</th><th style="padding:8px;text-align:left;color:#8C9DB5;font-weight:500;">标的名称</th><th style="padding:8px;text-align:right;color:#8C9DB5;font-weight:500;width:100px;">价格</th><th style="padding:8px;text-align:center;color:#8C9DB5;font-weight:500;width:80px;">来源</th></tr></thead><tbody>{assets_html}</tbody></table></td></tr><tr><td style="height:10px;"></td></tr><tr><td style="padding:20px;background-color:#1A2D4A;border-radius:0 0 12px 12px;"><h2 style="color:#E8EDF2;font-size:18px;margin:0 0 15px 0;"><span style="color:#D4943A;margin-right:8px;">●</span>行业资讯</h2><table width="100%" cellpadding="0" cellspacing="0" style="font-size:13px;"><thead><tr style="border-bottom:2px solid rgba(232,237,242,0.15);"><th style="padding:8px;text-align:left;color:#8C9DB5;font-weight:500;width:80px;">类别</th><th style="padding:8px;text-align:left;color:#8C9DB5;font-weight:500;">标题</th><th style="padding:8px;text-align:center;color:#8C9DB5;font-weight:500;width:80px;">来源</th></tr></thead><tbody>{news_html}</tbody></table></td></tr><tr><td style="padding:20px;text-align:center;"><p style="color:#5A6B82;font-size:11px;margin:0;">BrandSeek 品牌资产追踪 · 数据采集时间: {datetime.now().strftime("%Y-%m-%d %H:%M")}<br/>数据来源: 京东拍卖、阿里拍卖、法院公告、Google News</p></td></tr></table></td></tr></table></body></html>"""
 
-def send_via_resend(to_email: str, html_content: str, api_key: str):
-    payload = json.dumps({"from": "onboarding@resend.dev", "to": [to_email], "subject": f"【BrandSeek日报】{datetime.now().strftime('%Y-%m-%d')} 品牌资产动态", "html": html_content}).encode("utf-8")
-    req = urllib.request.Request("https://api.resend.com/emails", data=payload, headers={"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"}, method="POST")
-    with urllib.request.urlopen(req, timeout=30) as resp:
-        result = json.loads(resp.read().decode("utf-8"))
-    print(f"[Resend] Sent! ID: {result.get('id', 'unknown')}")
-    return result
+def send_via_smtp(to_email, html_content):
+    host = os.environ.get("SMTP_HOST", "")
+    port = int(os.environ.get("SMTP_PORT", "587"))
+    user = os.environ.get("SMTP_USER", "")
+    password = os.environ.get("SMTP_PASSWORD", "")
+    msg = MIMEMultipart("alternative")
+    msg["Subject"] = f"【BrandSeek日报】{datetime.now().strftime('%Y-%m-%d')} 品牌资产动态"
+    msg["From"] = f"BrandSeek <{user}>"
+    msg["To"] = to_email
+    msg.attach(MIMEText(html_content, "html", "utf-8"))
+    server = smtplib.SMTP(host, port)
+    server.starttls()
+    server.login(user, password)
+    server.send_message(msg)
+    server.quit()
+    print(f"[SMTP] Sent to {to_email}")
 
 def main():
     if not os.path.exists("crawl_result.json"):
@@ -38,13 +49,10 @@ def main():
         f.write(html)
     print("Preview saved to email_preview.html")
     to_email = os.environ.get("TO_EMAIL", "")
-    api_key = os.environ.get("RESEND_API_KEY", "")
     if not to_email:
         print("Info: TO_EMAIL not set"); return
-    if not api_key:
-        print("Info: RESEND_API_KEY not set"); return
     try:
-        send_via_resend(to_email, html, api_key)
+        send_via_smtp(to_email, html)
         print(f"Sent to {to_email}")
     except Exception as e:
         print(f"Failed: {e}")
