@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-"""BrandSeek 邮件发送器"""
 import json, os, urllib.request
 from datetime import datetime
 
