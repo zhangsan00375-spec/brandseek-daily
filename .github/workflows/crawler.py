@@ -38,7 +38,13 @@ class JdAuctionCrawler:
         for kw in self.KEYWORDS:
             try:
                 url = f"https://auction-api.jd.com/auction/list?page=1&pageSize=20&keyword={urllib.parse.quote(kw)}"
-                req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0", "Referer": "https://auction.jd.com/"})
+                req = urllib.request.Request(url, headers={
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+    "Accept": "application/json, text/plain, */*",
+    "Accept-Language": "zh-CN,zh;q=0.9",
+    "Referer": "https://auction.jd.com/",
+    "Origin": "https://auction.jd.com",
+})
                 with urllib.request.urlopen(req, timeout=15) as resp:
                     data = json.loads(resp.read().decode("utf-8"))
                 for item in data.get("data", {}).get("list", []):
@@ -67,7 +73,11 @@ class AliAuctionCrawler:
         for kw in self.KEYWORDS:
             try:
                 url = f"https://zc-paimai.taobao.com/zc/zc_item_list.htm?q={urllib.parse.quote(kw)}"
-                req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
+                req = urllib.request.Request(url, headers={
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
+    "Accept-Language": "zh-CN,zh;q=0.9",
+})
                 with urllib.request.urlopen(req, timeout=15) as resp:
                     content = resp.read().decode("utf-8", errors="ignore")
                 matches = re.findall(r'"id":"(\d+)".*?"title":"([^"]*商标[^"]*)".*?"startPrice":"?([\d.]+)"?.*?"status":"?(\d)"?.*?"startTime":"([^"]*)"', content, re.DOTALL)
@@ -150,7 +160,10 @@ class CourtAnnouncementCrawler:
         for kw in ["商标", "品牌", "拍卖"]:
             try:
                 url = f"https://rmfygg.court.gov.cn/web/rmfyportal/noticleInfo?keyword={urllib.parse.quote(kw)}&columnId=6"
-                req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
+                req = urllib.request.Request(url, headers={
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+})
                 with urllib.request.urlopen(req, timeout=15) as resp:
                     content = resp.read().decode("utf-8", errors="ignore")
                 matches = re.findall(r'<a[^>]*href="(/web/rmfyportal/noticleInfo\?[^"]*id=([^"&]+)[^"]*)"[^>]*>([^<]*(?:商标|品牌|拍卖)[^<]*)</a>', content, re.IGNORECASE)
