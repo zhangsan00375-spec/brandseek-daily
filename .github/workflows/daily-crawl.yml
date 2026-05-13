@@ -14,13 +14,13 @@ jobs:
         with:
           python-version: '3.11'
       - name: Run crawler
-        run: python crawler.py 2>&1 | tee crawl_log.txt
+        run: python .github/workflows/crawler.py 2>&1 | tee crawl_log.txt
         continue-on-error: true
       - name: Send email
         env:
           TO_EMAIL: ${{ secrets.TO_EMAIL }}
           RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
-        run: python email_sender.py 2>&1 | tee email_log.txt
+        run: python .github/workflows/email_sender.py 2>&1 | tee email_log.txt
         continue-on-error: true
       - name: Upload all results
         uses: actions/upload-artifact@v4
